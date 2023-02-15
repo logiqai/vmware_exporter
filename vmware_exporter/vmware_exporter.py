@@ -94,10 +94,10 @@ class VmwareCollector():
 
         # label names and ammount will be needed later to insert labels from custom attributes
         self._labelNames = {
-            'vms': ['vm_name', 'ds_name', 'host_name', 'dc_name', 'cluster_name'],
-            'vm_perf': ['vm_name', 'ds_name', 'host_name', 'dc_name', 'cluster_name'],
-            'vmguests': ['vm_name', 'ds_name', 'host_name', 'dc_name', 'cluster_name'],
-            'snapshots': ['vm_name', 'ds_name', 'host_name', 'dc_name', 'cluster_name'],
+            'vms': ['vm_name', 'ds_name', 'host_name', 'dc_name', 'cluster_name','ip_address','network'],
+            'vm_perf': ['vm_name', 'ds_name', 'host_name', 'dc_name', 'cluster_name','ip_address','network'],
+            'vmguests': ['vm_name', 'ds_name', 'host_name', 'dc_name', 'cluster_name','ip_address','network'],
+            'snapshots': ['vm_name', 'ds_name', 'host_name', 'dc_name', 'cluster_name','ip_address','network'],
             'datastores': ['ds_name', 'dc_name', 'ds_cluster'],
             'hosts': ['host_name', 'dc_name', 'cluster_name'],
             'host_perf': ['host_name', 'dc_name', 'cluster_name'],
@@ -738,6 +738,7 @@ class VmwareCollector():
             'runtime.host',
             'parent',
             'summary.config.vmPathName',
+            'network',
         ]
 
         if self.collect_only['vms'] is True:
@@ -753,6 +754,7 @@ class VmwareCollector():
         if self.collect_only['vmguests'] is True:
             properties.extend([
                 'guest.disk',
+                'guest.ipAddress',
                 'guest.toolsStatus',
                 'guest.toolsVersion',
                 'guest.toolsVersionStatus2',
@@ -1103,6 +1105,28 @@ class VmwareCollector():
 
             if host_moid in host_labels:
                 labels[moid] = labels[moid] + host_labels[host_moid]
+
+            if "guest.ipAddress" in row:
+                """
+                add ip address of the vm
+                """
+                ip = row['guest.ipAddress']
+            else:
+                ip = 'n/a'
+
+            if "network" in row:
+                """
+                get network for the VM
+                """
+                nl = list()
+                for n in row['network']:
+                    #logging.info(n.name)
+                    nl = nl + [n.name]
+                network = ','.join(map(str, nl))
+            else:
+                network = 'n/a'
+
+            labels[moid] = labels[moid] + [ip] + [network]
 
             """
             this code was in vm_inventory before
